@@ -14,9 +14,13 @@ SERVER = sys.argv[1]
 PORT = int(sys.argv[2])
 
 # Contenido que vamos a enviar
-LINE = ''
-for palabra in sys.argv[3:]:
-    LINE = LINE + ' '+ palabra
+#LINE = ''
+if sys.argv[3] == 'register':
+    DIRECCION = sys.argv[4]
+    LINE = 'REGISTER sip:'+DIRECCION+' SIP/2.0\r\n'
+else:
+    for palabra in sys.argv[3:]:
+        LINE = ' '+ palabra
 
 # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
 my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
