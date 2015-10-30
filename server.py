@@ -23,13 +23,16 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
             print("El cliente nos manda " + line.decode('utf-8'))
             #hacemos las muvis
             deco = line.decode('utf-8')
-            if  deco.startswith('REGISTER'):
-                self.dic[self.client_address[0]] = deco[deco.find(':')+1:deco.find('SIP')-1]
+            if deco.startswith('REGISTER'):
+                direccion = deco[deco.find(':')+1:deco.find('SIP')-1]
+                self.dic[direccion] = self.client_address[0]
                 self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-            # Si no hay más líneas salimos del bucle infinito
+            if deco[deco.find('s:')+3:] == '0\r\n':
+                del self.dic[direccion]
+                
             if not line:
                 break
-        print(self.dic)
+
 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos

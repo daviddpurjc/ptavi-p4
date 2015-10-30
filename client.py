@@ -14,13 +14,17 @@ SERVER = sys.argv[1]
 PORT = int(sys.argv[2])
 
 # Contenido que vamos a enviar
-#LINE = ''
-if sys.argv[3] == 'register':
-    DIRECCION = sys.argv[4]
-    LINE = 'REGISTER sip:'+DIRECCION+' SIP/2.0\r\n'
-else:
-    for palabra in sys.argv[3:]:
-        LINE = ' '+ palabra
+
+if not len(sys.argv) == 6:
+    sys.exit("Usage: client.py ip puerto register sip_address expires_value")
+
+if not sys.argv[3] == 'register':
+    sys.exit("Usage: client.py ip puerto register sip_address expires_value")
+
+DIRECCION = sys.argv[4]
+expires = sys.argv[5]
+LINE = 'REGISTER sip:'+DIRECCION+' SIP/2.0\r\n'+'Expires: '+expires
+
 
 # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
 my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
