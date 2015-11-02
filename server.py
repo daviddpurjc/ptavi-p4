@@ -14,42 +14,53 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     Echo server class
     """
     dic = {}
+    direccion = ''
+    campoexpire = ''
+    listas = []
+    
 
     def handle(self):
         # Escribe dirección y puerto del cliente (de tupla client_address)
-        self.wfile.write(b"Hemos recibido tu peticion\r\n\r\n")
+        if self.listas == []:
+            self.json2registered()
         print (self.client_address)
         line = self.rfile.read()
         print("El cliente nos manda " + line.decode('utf-8'))
             #hacemos las muvis
         deco = line.decode('utf-8')
+        self.campoexpire = deco[deco.find('s:')+3:]
         if deco.startswith('REGISTER'):
-            direccion = deco[deco.find(':')+1:deco.find('SIP')-1]
-            self.dic[direccion] = self.client_address[0]
+            self.direccion = deco[deco.find(':')+1:deco.find('SIP')-1]
+            self.dic[self.direccion] = self.client_address[0]
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-        if deco[deco.find('s:')+3:] == '0\r\n':
-            del self.dic[direccion]
+        if self.campoexpire == '0\r\n':
+            del self.dic[self.direccion]
         print(self.dic)
-        
-    def register2json(self):
-        print('caca')
-        line = self.rfile.read()
-        print('caca2')
-        deco = line.decode('utf-8')
-        direccion = deco[deco.find(':')+1:deco.find('SIP')-1] 
-        campoexpire = deco[deco.find('s:')+3:]
-        caducidad = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(int(campoexpire)+time.time()))
-        dicc2 = {'address' : self.client_address[0], 'expires': caducidad}
-        lista = [direccion,dicc2]
-        json.dump(lista, open("registered.json",'w'), sort_keys=True, indent=4, separators=(',', ': '))
-            # Si no hay más líneas salimos del bucle infinito
+        self.register2json()
 
+    def register2json(self):
+        expira = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(int(self.campoexpire)+time.time()))
+        dicc2 = {'address' : self.client_address[0], 'expires': expira}
+        for lista in self.listas:
+            if lista[0] == self.direccion:
+                self.listas.remove(lista)
+        self.listas.append([self.direccion,dicc2])
+        for lista in self.listas:
+            if lista[1]['expires'] <= time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time())):
+                self.listas.remove(lista)
+        json.dump(self.listas, open("registered.json",'w'), sort_keys=True, indent=4, separators=(',', ': '))
+
+    def json2registered(self):
+        try:
+            self.listas = json.load(open("registered.json",'r'))
+            print (self.listas)
+        except:
+            pass
 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
     serv = socketserver.UDPServer(('', int(sys.argv[1])), SIPRegisterHandler)
     print("Lanzando servidor UDP de eco...")
     serv.serve_forever()
-    #serv.register2json()
     
     
